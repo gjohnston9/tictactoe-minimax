@@ -1,23 +1,35 @@
+class NoMoveMadeException(Exception):
+	pass
+
 class GameState(object):
-	def __init__(self, new_turn, new_x_y, board=None, move_count=0, n=3):
-		self.board = board or [[None, None, None], [None, None, None], [None, None, None]]
-		self.new_turn = new_turn
-		self.new_x_y = new_x_y
+	def __init__(self, board, turn, move_count=0):
+		self.board = board
+		self.turn = turn
 		self.move_count = move_count
-		self.n = n
-		self.move(new_turn, new_x_y)
+
+		assert len(board) == len(board[0])
+		self.n = len(board)
+
+		# Once a move is made, these will record the x and y index of the move most recently made on the board,
+		# as well as whose turn it was when the move was made.
+		self.x = None
+		self.y = None
+		self.old_turn = None
 
 
-	def move(self, new_turn, new_x_y):
-		self.new_turn = new_turn
-		self.new_x_y = new_x_y
+	def switch_turn(self):
+		self.turn = 'X' if self.turn == 'O' else 'O'
 
-		# make move
-		self.board[new_x_y[1]][new_x_y[0]] = new_turn
 
-		# reverse turns
-		self.old_turn = new_turn
-		self.new_turn = 'O' if new_turn == 'X' else 'X'
+	def move(self, x, y):
+		# record move (for quick checking of win/loss/draw)
+		self.x = x
+		self.y = y
+		self.old_turn = self.turn
+
+		# make move and switch turn
+		self.board[y][x] = self.turn
+		self.switch_turn()
 
 		# update move_count
 		self.move_count += 1
@@ -27,36 +39,46 @@ class GameState(object):
 		ret = '\n'
 		for y in range(self.n):
 			for x in range(self.n):
-				if y == self.new_x_y[1] and x == self.new_x_y[0]:
+				if y == self.y and x == self.x:
 					ret += ' ({}) |'.format(self.board[y][x])
 				else:
 					ret += '  {}  |'.format(self.board[y][x] or ' ')
-			# ret += '\n----------\n'
 			ret = ret[:-1] + '\n-----------------\n'
 
-		ret += '\nturn to move: {}'.format(self.new_turn)
+		try:
+			result = self.check_winner()
+			if result in ('X', 'O'):
+				ret += '\nWinner: {}'.format(result)
+			elif result == 'draw':
+				ret += '\nThe game is a draw.'
+			else: # no winner yet
+				ret += '\nTurn to move: {}'.format(self.turn)
+		except NoMoveMadeException:
+			ret += '\nTurn to move: {}'.format(self.turn)
+
 		return ret
 
 
-	def check_state(self):
-		new_x = self.new_x_y[0]
-		new_y = self.new_x_y[1]
+	def check_winner(self):
+		if self.x == None or self.y == None or self.old_turn == None:
+			raise NoMoveMadeException("called check_state without making a move first")
+
 		# check row
 		for x in range(self.n):
-			if self.board[new_y][x] != self.old_turn:
+			if self.board[self.y][x] != self.old_turn:
 				break
 		else:
 			return self.old_turn
 
 		# check column
 		for y in range(self.n):
-			if self.board[y][new_x] != self.old_turn:
+			if self.board[y][self.x] != self.old_turn:
 				break
 		else:
 			return self.old_turn
 
 
-		if (new_x == new_y):
+		if (self.x == self.y):
 			# check forward diagonal
 			for z in range(self.n):
 				if self.board[z][z] != self.old_turn:
@@ -64,7 +86,7 @@ class GameState(object):
 			else:
 				return self.old_turn
 
-		if (new_x == self.n - new_y - 1):
+		if (self.x == self.n - self.y - 1):
 			# check backward diagonal
 			for y in range(self.n):
 				if self.board[y][self.n - y - 1] != self.old_turn:
@@ -81,14 +103,3 @@ class GameState(object):
 
 	def next_states(self):
 		raise NotImplementedError
-
-
-# testing
-no_winner = GameState('O', (1,1), board=[['X', None, 'X'], ['O', None, None], ['O', None, None]])
-print no_winner.check_state()
-x = GameState('X', (0,2), board=[[None, None, 'X'], [None, 'X', None], [None, None, None]])
-print x
-print x.check_state()
-draw = GameState('X', (0, 0), board=[[None, 'O', 'O'], ['O', 'X', 'X'], ['O', 'X', 'O']], move_count=8)
-print draw
-print draw.check_state()

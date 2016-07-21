@@ -9,22 +9,37 @@ class Test(unittest.TestCase):
 		no_winner_yet.move(1,1)
 		print "\n\nno winner yet:"
 		print no_winner_yet
-		self.assertTrue(no_winner_yet.check_winner() == None)
+		self.assertEqual(no_winner_yet.check_winner(), None)
 
+		print "\n\nno_winner_yet next states:"
+		next = no_winner_yet.next_states()
+		self.assertEqual(len(next), 4)
+		for state in next:
+			print state
+			print "\n\n\n"
+
+		self.assertEqual(next[0].check_winner(), 'X')
+		self.assertEqual(next[1].check_winner(), None)
+		self.assertEqual(next[2].check_winner(), None)
+		self.assertEqual(next[3].check_winner(), None)
+
+	# @unittest.skip('')
 	def test_x_win(self):
 		x = GameState([[None, None, 'X'], [None, 'X', None], [None, None, None]], 'X')
 		x.move(0,2)
 		print "\n\nx wins:"
 		print x
-		self.assertTrue(x.check_winner() == 'X')
+		self.assertEqual(x.check_winner(), 'X')
 
+	# @unittest.skip('')
 	def test_draw(self):
 		draw = GameState([[None, 'O', 'O'], ['O', 'X', 'X'], ['O', 'X', 'O']], 'X', move_count=8)
 		draw.move(0,0)
 		print "\n\ndraw:"
 		print draw
-		self.assertTrue(draw.check_winner() == 'draw')
+		self.assertEqual(draw.check_winner(), 'draw')
 
+	# @unittest.skip('')
 	def test_NoMoveException(self):
 		no_move_made = GameState([[None, None, None], [None, None, None], [None, None, None]], 'X')
 		print "\n\nno move made:"

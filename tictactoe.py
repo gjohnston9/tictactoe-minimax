@@ -1,6 +1,16 @@
 class NoMoveMadeException(Exception):
 	pass
 
+class IllegalMoveException(Exception):
+	pass
+
+
+def new_copy(in_list):
+		if isinstance(in_list, list):
+			return list(map(new_copy, in_list))
+		else:
+			return in_list
+
 class GameState(object):
 	def __init__(self, board, turn, move_count=0):
 		self.board = board
@@ -22,6 +32,8 @@ class GameState(object):
 
 
 	def move(self, x, y):
+		if self.board[y][x] != None:
+			raise IllegalMoveException("there is already a symbol placed at this location (x = {}, y = {})".format(x, y))
 		# record move (for quick checking of win/loss/draw)
 		self.x = x
 		self.y = y
@@ -100,6 +112,41 @@ class GameState(object):
 		return None
 
 
-
 	def next_states(self):
+		states = []
+		for y in range(self.n):
+			for x in range(self.n):
+				if self.board[y][x] == None:
+					new_state = GameState(new_copy(self.board), self.turn, move_count=self.move_count)
+					new_state.move(x, y)
+					states.append(new_state)
+		return states
+
+
+def GameDriver(object):
+	def __init__(self):
+		symbol = raw_input("Choose your symbol. X/O")
+		while symbol != 'X' and symbol != 'O':
+			symbol = raw_input("Could not understand your answer. Please enter X or O.")
+
+		self.player_symbol = symbol
+
+		first = raw_input("Would you like to start? Y/N")
+		while first != 'Y' and first != 'N':
+			first = raw_input("Could not understand your answer. Please enter Y or N.")
+
+		if first == 'Y':
+			self.game = GameState([[None, None, None], [None, None, None], [None, None, None]], self.player_symbol)
+		else:
+			self.game = GameState([[None, None, None], [None, None, None], [None, None, None]], 'X' if self.player_symbol == 'O' else 'O')
+
+		self.start()
+
+	def player_move(self):
+		raise NotImplementedError
+
+	def computer_move(self):
+		raise NotImplementedError
+
+	def start():
 		raise NotImplementedError

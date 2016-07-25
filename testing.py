@@ -1,9 +1,10 @@
 import unittest
 
-from tictactoe import GameState, NoMoveMadeException
+from tictactoe import GameState, GameDriver, NoMoveMadeException
 
 class Test(unittest.TestCase):
 
+	# @unittest.skip('')
 	def test_no_winner_yet(self):
 		no_winner_yet = GameState([['X', None, 'X'], ['O', None, None], ['O', None, None]], 'O')
 		no_winner_yet.move(1,1)
@@ -12,16 +13,16 @@ class Test(unittest.TestCase):
 		self.assertEqual(no_winner_yet.check_winner(), None)
 
 		print "\n\nno_winner_yet next states:"
-		next = no_winner_yet.next_states()
+		next = no_winner_yet.next_states_and_moves()
 		self.assertEqual(len(next), 4)
 		for state in next:
-			print state
+			print state[0]
 			print "\n\n\n"
 
-		self.assertEqual(next[0].check_winner(), 'X')
-		self.assertEqual(next[1].check_winner(), None)
-		self.assertEqual(next[2].check_winner(), None)
-		self.assertEqual(next[3].check_winner(), None)
+		self.assertEqual(next[0][0].check_winner(), 'X')
+		self.assertEqual(next[1][0].check_winner(), None)
+		self.assertEqual(next[2][0].check_winner(), None)
+		self.assertEqual(next[3][0].check_winner(), None)
 
 	# @unittest.skip('')
 	def test_x_win(self):
@@ -45,6 +46,10 @@ class Test(unittest.TestCase):
 		print "\n\nno move made:"
 		print no_move_made
 		self.assertRaises(NoMoveMadeException, no_move_made.check_winner)
+
+	# @unittest.skip('')
+	def test_PlayGame(self):
+		self.assertIsNotNone(GameDriver())
 
 if __name__ == '__main__':
 	unittest.main()

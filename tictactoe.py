@@ -1,3 +1,4 @@
+import operator
 import time
 
 class NoMoveMadeException(Exception):
@@ -170,9 +171,6 @@ class GameDriver(object):
 		"""
 		pick first possible move from list of states
 		"""
-		states_and_moves = self.game.next_states_and_moves()
-		x = states_and_moves[0][1][0]
-		y = states_and_moves[0][1][1]
 
 		delay = 0.5
 		print "Thinking..."
@@ -184,7 +182,43 @@ class GameDriver(object):
 		print ".\n"
 		time.sleep(delay)
 
-		self.game.move(x,y)
+		vals = {}
+		for next_state, next_move in self.game.next_states_and_moves():
+			vals[next_move] = self.minimax_help(next_state, True)
+		best_move = max(vals.iteritems(), key=operator.itemgetter(1))[0]
+		self.game.move(best_move[0], best_move[1])
+
+
+	def minimax(self):
+		return self.minimax_help(self.board, True)
+
+	def minimax_help(self, board, maximizingPlayer):
+		try:
+			result = board.check_winner()
+		except NoMoveMadeException:
+			result = None
+
+		if result == "draw":
+			return 0
+		elif result == self.player_symbol:
+			return -1
+		elif result != None:
+			return 1
+
+		if maximizingPlayer:
+			best = float("-inf")
+			for next_state, next_move in board.next_states_and_moves():
+				v = self.minimax_help(next_state, False)
+				best = max(best, v)
+			return best
+
+		else:
+			best = float("inf")
+			for next_state, next_move in board.next_states_and_moves():
+				v = self.minimax_help(next_state, True)
+				best = min(best, v)
+			return best
+
 
 	def start(self):
 		while True:

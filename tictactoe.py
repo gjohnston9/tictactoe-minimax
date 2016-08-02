@@ -27,7 +27,7 @@ class GameState(object):
 
 
 	def switch_turn(self):
-		self.turn = 'X' if self.turn == 'O' else 'O'
+		self.turn = "X" if self.turn == "O" else "O"
 
 
 	def move(self, x, y):
@@ -47,30 +47,30 @@ class GameState(object):
 
 
 	def __str__(self):
-		ret = '\n'
+		ret = "\n"
 		for y in range(self.n):
 			for x in range(self.n):
 				if y == self.y and x == self.x:
-					ret += ' ({}) |'.format(self.board[y][x])
+					ret += " ({}) |".format(self.board[y][x])
 				else:
-					ret += '  {}  |'.format(self.board[y][x] or ' ')
-			ret = ret[:-1] + '\n-----------------\n'
+					ret += "  {}  |".format(self.board[y][x] or " ")
+			ret = ret[:-1] + "\n-----------------\n"
 
 		
 		result = self.check_winner()
-		if result in ('X', 'O'):
-			ret += '\nWinner: {}'.format(result)
-		elif result == 'draw':
-			ret += '\nThe game is a draw.'
+		if result in ("X", "O"):
+			ret += "\nWinner: {}".format(result)
+		elif result == "draw":
+			ret += "\nThe game is a draw."
 		else: # no winner yet
-			ret += '\nTurn to move: {}'.format(self.turn)
+			ret += "\nTurn to move: {}".format(self.turn)
 
 		return ret
 
 
 	def check_winner(self):
 		if self.move_count == self.n ** 2:
-			return 'draw'
+			return "draw"
 
 		# check row
 		for y in range(self.n):
@@ -134,13 +134,13 @@ class GameState(object):
 class GameDriver(object):
 	def __init__(self):
 		symbol = raw_input("Choose your symbol (X/O)\n")
-		while symbol != 'X' and symbol != 'O':
+		while symbol != "X" and symbol != "O":
 			symbol = raw_input("Could not understand your answer. Please enter X or O.")
 
 		self.player_symbol = symbol
 
 		first = raw_input("\nWould you like to start? (Y/N)\n")
-		while first != 'Y' and first != 'N':
+		while first != "Y" and first != "N":
 			first = raw_input("Could not understand your answer. Please enter Y or N.")
 
 		# TODO: add support for NxN board
@@ -151,10 +151,10 @@ class GameDriver(object):
 
 		raw_input("\nPress Enter to continue!\n")
 
-		if first == 'Y':
+		if first == "Y":
 			self.game = GameState([[None, None, None], [None, None, None], [None, None, None]], self.player_symbol)
 		else:
-			self.game = GameState([[None, None, None], [None, None, None], [None, None, None]], 'X' if self.player_symbol == 'O' else 'O')
+			self.game = GameState([[None, None, None], [None, None, None], [None, None, None]], "X" if self.player_symbol == "O" else "O")
 
 		self.start()
 

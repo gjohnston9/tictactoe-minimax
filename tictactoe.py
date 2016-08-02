@@ -1,12 +1,8 @@
 import operator
 import time
 
-class NoMoveMadeException(Exception):
-	pass
-
 class IllegalMoveException(Exception):
 	pass
-
 
 def new_copy(in_list):
 		if isinstance(in_list, list):
@@ -60,57 +56,62 @@ class GameState(object):
 					ret += '  {}  |'.format(self.board[y][x] or ' ')
 			ret = ret[:-1] + '\n-----------------\n'
 
-		try:
-			result = self.check_winner()
-			if result in ('X', 'O'):
-				ret += '\nWinner: {}'.format(result)
-			elif result == 'draw':
-				ret += '\nThe game is a draw.'
-			else: # no winner yet
-				ret += '\nTurn to move: {}'.format(self.turn)
-		except NoMoveMadeException:
+		
+		result = self.check_winner()
+		if result in ('X', 'O'):
+			ret += '\nWinner: {}'.format(result)
+		elif result == 'draw':
+			ret += '\nThe game is a draw.'
+		else: # no winner yet
 			ret += '\nTurn to move: {}'.format(self.turn)
 
 		return ret
 
 
 	def check_winner(self):
-		if self.x == None or self.y == None or self.old_turn == None:
-			raise NoMoveMadeException("called check_state without making a move first")
-
-		# check row
-		for x in range(self.n):
-			if self.board[self.y][x] != self.old_turn:
-				break
-		else:
-			return self.old_turn
-
-		# check column
-		for y in range(self.n):
-			if self.board[y][self.x] != self.old_turn:
-				break
-		else:
-			return self.old_turn
-
-
-		if (self.x == self.y):
-			# check forward diagonal
-			for z in range(self.n):
-				if self.board[z][z] != self.old_turn:
-					break
-			else:
-				return self.old_turn
-
-		if (self.x == self.n - self.y - 1):
-			# check backward diagonal
-			for y in range(self.n):
-				if self.board[y][self.n - y - 1] != self.old_turn:
-					break
-			else:
-				return self.old_turn
-
 		if self.move_count == self.n ** 2:
 			return 'draw'
+
+		# check row
+		for y in range(self.n):
+			win = self.board[y][0]
+			if win == None:
+				continue
+			for x in range(self.n):
+				if self.board[y][x] != win:
+					break
+			else:
+				return win
+
+
+		# check column
+		for x in range(self.n):
+			win = self.board[0][x]
+			if win == None:
+				continue
+			for y in range(self.n):
+				if self.board[y][x] != win:
+					break
+			else:
+				return win
+
+		# check forward diagonal
+		win = self.board[0][0]
+		if win  != None:
+			for z in range(1, self.n ):
+				if self.board[z][z] != win:
+					break
+			else:
+				return win
+
+		# check backward diagonal
+		win = self.board[0][self.n - 1]
+		if win != None:
+			for y in range(1, self.n):
+				if self.board[y][self.n - y - 1] != win:
+					break
+			else:
+				return win
 
 		return None
 
@@ -159,12 +160,19 @@ class GameDriver(object):
 
 	def player_move(self):
 		move = raw_input("Enter the index of your move.\n")
-		while not move.isdigit() or int(move) > self.game.n ** 2:
-			move = raw_input("Please enter an integer greater than or equal to 1 and less than or equal to {}.\n".format(self.game.n ** 2))
+		while True:
+			while not move.isdigit() or int(move) > self.game.n ** 2 or int(move) < 1:
+				move = raw_input("Please enter an integer greater than or equal to 1 and less than or equal to {}.\n".format(self.game.n ** 2))
 
-		move = int(move) - 1 # easier to calculate x and y this way, since arrays representing game board are 0-indexed
-		y = move / self.game.n
-		x = move % self.game.n
+			move = int(move) - 1 # easier to calculate x and y this way, since arrays representing game board are 0-indexed
+			y = move / self.game.n
+			x = move % self.game.n
+
+			if self.game.board[y][x] != None:
+				print "There is already a piece in that location on the board."
+				move = ""
+			else:
+				break
 		self.game.move(x, y)
 
 	def computer_move(self):
@@ -184,19 +192,13 @@ class GameDriver(object):
 
 		vals = {}
 		for next_state, next_move in self.game.next_states_and_moves():
-			vals[next_move] = self.minimax_help(next_state, True)
+			vals[next_move] = self.minimax(next_state, False)
 		best_move = max(vals.iteritems(), key=operator.itemgetter(1))[0]
 		self.game.move(best_move[0], best_move[1])
 
 
-	def minimax(self):
-		return self.minimax_help(self.board, True)
-
-	def minimax_help(self, board, maximizingPlayer):
-		try:
-			result = board.check_winner()
-		except NoMoveMadeException:
-			result = None
+	def minimax(self, board, maximizingPlayer):
+		result = board.check_winner()
 
 		if result == "draw":
 			return 0
@@ -208,14 +210,14 @@ class GameDriver(object):
 		if maximizingPlayer:
 			best = float("-inf")
 			for next_state, next_move in board.next_states_and_moves():
-				v = self.minimax_help(next_state, False)
+				v = self.minimax(next_state, False)
 				best = max(best, v)
 			return best
 
 		else:
 			best = float("inf")
 			for next_state, next_move in board.next_states_and_moves():
-				v = self.minimax_help(next_state, True)
+				v = self.minimax(next_state, True)
 				best = min(best, v)
 			return best
 
@@ -229,3 +231,6 @@ class GameDriver(object):
 			print self.game
 			if self.game.check_winner():
 				break
+
+if __name__ == "__main__":
+	GameDriver()

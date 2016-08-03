@@ -135,19 +135,35 @@ class GameDriver(object):
 	def __init__(self):
 		symbol = raw_input("Choose your symbol (X/O)\n")
 		while symbol != "X" and symbol != "O":
-			symbol = raw_input("Could not understand your answer. Please enter X or O.")
+			symbol = raw_input("Could not understand your answer. Please enter X or O.\n")
 
 		self.player_symbol = symbol
 
+		n = raw_input("\nChoose the size of your board (enter a positive integer, this will be the height and width of your board\n")
+		while not n.isdigit() or int(n) < 1:
+			n = raw_input("Please enter a positive integer\n")
+		n = int(n)
+
 		first = raw_input("\nWould you like to start? (Y/N)\n")
 		while first != "Y" and first != "N":
-			first = raw_input("Could not understand your answer. Please enter Y or N.")
+			first = raw_input("Could not understand your answer. Please enter Y or N.\n")
 
-		# TODO: add support for NxN board
 		print "\nThank you. To enter your moves, enter the index of your move on the board, with indices defined as follows:\n"
-		for y in range(3):
-			print "{}|{}|{}".format(3*y + 1, 3*y + 2, 3*y + 3)
-			print "-----"
+
+		col_width = n
+		indices_str = ""
+
+		all_n = range(1, n**2 + 1)
+		rows = [all_n[i:i+n] for i in range(0, n**2, n)]
+
+		for row in rows:
+			row = [str(i) for i in row]
+			indices_str += "|".join(word.center(col_width) for word in row) + "\n"
+			indices_str += "-" * (col_width + 1) * n + "\n"
+		indices_str = indices_str[:-1 * (col_width + 1) * n - 1]
+
+		print indices_str
+
 
 		raw_input("\nPress Enter to continue!\n")
 

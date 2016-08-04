@@ -23,7 +23,6 @@ class GameState(object):
 		# as well as whose turn it was when the move was made.
 		self.x = None
 		self.y = None
-		self.old_turn = None
 
 
 	def switch_turn(self):
@@ -33,10 +32,9 @@ class GameState(object):
 	def move(self, x, y):
 		if self.board[y][x] != None:
 			raise IllegalMoveException("there is already a symbol placed at this location (x = {}, y = {})".format(x, y))
-		# record move (for quick checking of win/loss/draw)
+		# record move (for indication of most recent move when printing board)
 		self.x = x
 		self.y = y
-		self.old_turn = self.turn
 
 		# make move and switch turn
 		self.board[y][x] = self.turn
@@ -54,7 +52,7 @@ class GameState(object):
 					ret += " ({}) |".format(self.board[y][x])
 				else:
 					ret += "  {}  |".format(self.board[y][x] or " ")
-			ret = ret[:-1] + "\n-----------------\n"
+			ret = ret[:-1] + "\n" + "-" * self.n * 6 + "\n"
 
 		
 		result = self.check_winner()
@@ -168,9 +166,9 @@ class GameDriver(object):
 		raw_input("\nPress Enter to continue!\n")
 
 		if first == "Y":
-			self.game = GameState([[None, None, None], [None, None, None], [None, None, None]], self.player_symbol)
+			self.game = GameState([[None for _ in range(n)] for _ in range(n)], self.player_symbol)
 		else:
-			self.game = GameState([[None, None, None], [None, None, None], [None, None, None]], "X" if self.player_symbol == "O" else "O")
+			self.game = GameState([[None for _ in range(n)] for _ in range(n)], "X" if self.player_symbol == "O" else "O")
 
 		self.start()
 

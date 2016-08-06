@@ -67,9 +67,6 @@ class GameState(object):
 
 
 	def check_winner(self):
-		if self.move_count == self.n ** 2:
-			return "draw"
-
 		# check row
 		for y in range(self.n):
 			win = self.board[y][0]
@@ -111,6 +108,9 @@ class GameState(object):
 			else:
 				return win
 
+		if self.move_count == self.n ** 2:
+			return "draw"
+
 		return None
 
 	def next_states_and_moves(self):
@@ -127,6 +127,77 @@ class GameState(object):
 					new_state.move(x, y)
 					states.append((new_state, (x, y),))
 		return states
+
+
+	def evaluate(self, symbol):
+		"""
+		return an estimate of how desirable of a position this position is (for the player with the provided symbol)
+
+		for each player, this heuristic looks at each row, column, and diagonal; if the row/column/diagonal is not obstructed
+		by pieces belonging to the other player, the player's value is increased according to how many pieces they have on that
+		row/column/diagonal
+
+		the overall value is the player's value minus the opponent's value
+		"""
+		other_symbol = "X" if symbol == "O" else "O"
+
+		player_total = 0
+		opponent_total = 0
+
+		for total, own, other in ((player_total, symbol, other_symbol), (opponent_total, other_symbol, symbol):
+
+			# rows
+			for y in range(self.n):
+				benefit = 0
+				for x in range(self.n):
+					if self.board[y][x] == None:
+						continue
+					elif self.board[y][x] == own:
+						benefit += 1
+					elif self.board[y][x] == other: # this row is obstructed
+						break
+				else:
+					total += benefit # row is unobstructed
+
+			# ccolumns
+			for x in range(self.n):
+				benefit = 0
+				for y in range(self.n):
+					if self.board[y][x] == None:
+						continue
+					elif self.board[y][x] == own:
+						benefit += 1
+					elif self.board[y][x] == other: # this column is obstructed
+						break
+				else:
+					total += benefit # column is unobstructed
+
+
+			# forward diagonal
+			benefit = 0	
+			for z in range(1, self.n):
+				if self.board[z][z] == None:
+						continue
+					elif self.board[z][z] == own:
+						benefit += 1
+					elif self.board[z][z] == other: # this diagonal is obstructed
+						break
+				else:
+					total += benefit # diagonal is unobstructed
+
+			# backward diagonal
+			if win != None:
+				for y in range(1, self.n):
+					if self.board[y][self.n - y - 1] == None:
+						continue
+					elif self.board[y][self.n - y - 1] == own:
+						benefit += 1
+					elif self.board[y][self.n - y - 1] == other: # this diagonal is obstructed
+						break
+				else:
+					total += benefit # diagonal is unobstructed
+
+			return player_total - opponent_total
 
 
 class GameDriver(object):
@@ -204,36 +275,39 @@ class GameDriver(object):
 		print ".\n"
 		time.sleep(delay)
 
-		vals = {}
-		for next_state, next_move in self.game.next_states_and_moves():
-			vals[next_move] = self.minimax(next_state, False)
-		best_move = max(vals.iteritems(), key=operator.itemgetter(1))[0]
-		self.game.move(best_move[0], best_move[1])
+		move = self.minimax(self.game, True, float("-inf"), float("+inf"))[1]
+		self.game.move(*move)
 
 
-	def minimax(self, board, maximizingPlayer):
-		result = board.check_winner()
+	def minimax(self, board, comp_turn, alpha, beta):
+		winner = board.check_winner()	
+		if winner == "draw":
+			return 0, None
+		elif winner == self.player_symbol:
+			return -1, None
+		elif winner != None:
+			return 1, None
 
-		if result == "draw":
-			return 0
-		elif result == self.player_symbol:
-			return -1
-		elif result != None:
-			return 1
-
-		if maximizingPlayer:
-			best = float("-inf")
-			for next_state, next_move in board.next_states_and_moves():
-				v = self.minimax(next_state, False)
-				best = max(best, v)
-			return best
-
+		states_and_moves = board.next_states_and_moves()
+		best_move = None
+		if comp_turn:
+			for state, move in states_and_moves:
+				score = self.minimax(state, False, alpha, beta)[0]
+				if score > alpha:
+					alpha = score
+					best_move = move
+				if alpha >= beta:
+					break
+			return alpha, best_move
 		else:
-			best = float("inf")
-			for next_state, next_move in board.next_states_and_moves():
-				v = self.minimax(next_state, True)
-				best = min(best, v)
-			return best
+			for state, move in states_and_moves:
+				score = self.minimax(state, True, alpha, beta)[0]
+				if score < beta:
+					beta = score
+					best_move = move
+				if alpha >= beta:
+					break
+			return beta, best_move
 
 
 	def start(self):

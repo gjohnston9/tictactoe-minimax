@@ -116,8 +116,8 @@ class GameState(object):
 	def next_states_and_moves(self):
 		"""
 		return a list of tuples, where each tuple contains:
-		    - a state immediately reachable from the current game state
-		    - another tuple with the x and y coordinates of the move required to create that state
+			- a state immediately reachable from the current game state
+			- another tuple with the x and y coordinates of the move required to create that state
 		"""
 		states = []
 		for y in range(self.n):
@@ -144,7 +144,7 @@ class GameState(object):
 		player_total = 0
 		opponent_total = 0
 
-		for total, own, other in ((player_total, symbol, other_symbol), (opponent_total, other_symbol, symbol):
+		for total, own, other in ((player_total, symbol, other_symbol), (opponent_total, other_symbol, symbol)):
 
 			# rows
 			for y in range(self.n):
@@ -174,28 +174,28 @@ class GameState(object):
 
 
 			# forward diagonal
-			benefit = 0	
+			benefit = 0 
 			for z in range(1, self.n):
 				if self.board[z][z] == None:
-						continue
-					elif self.board[z][z] == own:
-						benefit += 1
-					elif self.board[z][z] == other: # this diagonal is obstructed
-						break
+					continue
+				elif self.board[z][z] == own:
+					benefit += 1
+				elif self.board[z][z] == other: # this diagonal is obstructed
+					break
 				else:
 					total += benefit # diagonal is unobstructed
 
 			# backward diagonal
-			if win != None:
-				for y in range(1, self.n):
-					if self.board[y][self.n - y - 1] == None:
-						continue
-					elif self.board[y][self.n - y - 1] == own:
-						benefit += 1
-					elif self.board[y][self.n - y - 1] == other: # this diagonal is obstructed
-						break
-				else:
-					total += benefit # diagonal is unobstructed
+			benefit = 0
+			for y in range(1, self.n):
+				if self.board[y][self.n - y - 1] == None:
+					continue
+				elif self.board[y][self.n - y - 1] == own:
+					benefit += 1
+				elif self.board[y][self.n - y - 1] == other: # this diagonal is obstructed
+					break
+			else:
+				total += benefit # diagonal is unobstructed
 
 			return player_total - opponent_total
 
@@ -275,12 +275,13 @@ class GameDriver(object):
 		print ".\n"
 		time.sleep(delay)
 
-		move = self.minimax(self.game, True, float("-inf"), float("+inf"))[1]
+		# TODO: how deep to look? maybe base this on a difficulty parameter specified by user?
+		move = self.minimax(self.game, 6, True, float("-inf"), float("+inf"))[1]
 		self.game.move(*move)
 
 
-	def minimax(self, board, comp_turn, alpha, beta):
-		winner = board.check_winner()	
+	def minimax(self, board, level, comp_turn, alpha, beta):
+		winner = board.check_winner()   
 		if winner == "draw":
 			return 0, None
 		elif winner == self.player_symbol:
@@ -288,11 +289,15 @@ class GameDriver(object):
 		elif winner != None:
 			return 1, None
 
+		if level == 0:
+			# TODO: normalize this between -1 and 1. Also come up with a better way to identify player/computer symbols
+			return -1 * board.evaluate(self.player_symbol), None
+
 		states_and_moves = board.next_states_and_moves()
 		best_move = None
 		if comp_turn:
 			for state, move in states_and_moves:
-				score = self.minimax(state, False, alpha, beta)[0]
+				score = self.minimax(state, level - 1, False, alpha, beta)[0]
 				if score > alpha:
 					alpha = score
 					best_move = move
@@ -301,7 +306,7 @@ class GameDriver(object):
 			return alpha, best_move
 		else:
 			for state, move in states_and_moves:
-				score = self.minimax(state, True, alpha, beta)[0]
+				score = self.minimax(state, level - 1, True, alpha, beta)[0]
 				if score < beta:
 					beta = score
 					best_move = move
